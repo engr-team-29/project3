@@ -1,6 +1,17 @@
 
 #include "speedDecider.hpp"
 #include "robot.hpp"
+/*****Line reading, values for lines from image*****/
+struct LineReading{
+	int leftLine=0;
+	int leftPosition=0;
+	int rightLine=0;
+	int rightPosition=0;
+	int topLine=0;
+	int topPosition=0;
+	int bottomLine=0;
+	int bottomPosition=0;
+};
 
 int main(){
 
@@ -11,25 +22,19 @@ int main(){
 	const double kp = 0.04; //how far the error is from the error line, the constant turning SCALE 
 
    //const int CameraWidth = 150;
-    double vLeft = 40.0;
-    double vRight = 40.0;
 
    
-    while(1){ 
-		
+    while(1){
+    double vLeft = 40.0;
+    double vRight = 40.0;
 		takePicture();
-		
-		double Line_position = 0;                  // While true is going in a loop analyzing the frames
-
-		int white = 0; 
-		int leftLine=0;
-		int rightLine=0;
-		int topLine=0;
-		int bottomLine=0;
-		int CameraWidth = 150;    
+		// While true is going in a loop analyzing the frames
+		LineReading reading; 
+		//LineReading reading = new LineReading();
+		//int CameraWidth = 150;    
 		for(int i =0; i<4; i++){
-			Line_position =0;
-			white=0;
+			//Line_position =0;
+			//white=0;
 			//will check 3 sides.
 			int checkCol=0;
 			int checkRow = -1;
@@ -41,63 +46,104 @@ int main(){
 				for (int pixInt = 0; pixInt < cameraView.height; pixInt++){                           
 			int brightness = get_pixel(cameraView, pixInt, checkCol, 3);       // Brightness of the pixels
 			if(brightness>=250){
-                // Detects pixels with a brightness of 255            
-				white++;                                            
-				 Line_position += pixInt;
+                // Detects pixels with a brightness of 255 
+				if(i==1){                                      
+				 reading.leftPosition += pixInt;
+				 reading.leftLine++;
+			 }
+			 else{
+				 reading.rightPosition += pixInt;
+				 reading.rightLine++;
+				 }
 				} 
 		  }
 		 
 			}
 			else if(i==2 ||i==3){
-				for (int pixInt = 0; pixInt < CameraWidth; pixInt++){                           
+				for (int pixInt = 0; pixInt < cameraView.width; pixInt++){                           
 			int brightness = get_pixel(cameraView, checkRow, pixInt, 3);       // Brightness of the pixels
 			if(brightness>=250){                             // Detects pixels with a brightness of 255            
-				white++;                                            
-				int linePosition= pixInt - CameraWidth/2;
+				//white++;                                            
+				int linePosition= pixInt - cameraView.width/2;
+				if(i==2){
+					reading.bottomPosition += pixInt;
+				 reading.bottomLine++;
+				}
+				else{
+					reading.topPosition += pixInt;
+				 reading.topLine++;
+				}
 				} 
 			}
 			}
-			if(i==1){leftLine=white;}
-			if(i==0){rightLine=white;}
-			if(i==3){topLine=white;}
-			if(i==2){bottomLine=white;}
 			
 		}
 
 		 //Line_position /= white;                         // Divides the Line Position by the white  
 		//}
-		std::cout<<std::endl<<"left:"<<leftLine<<" right:"<<rightLine<<" top:"<<topLine<<" bot:"<<bottomLine<<std::endl;    // Prints the average
+		std::cout<<std::endl<<"left:"<<reading.leftLine<<" right:"<<reading.rightLine<<" top:"<<reading.topLine<<" bot:"<<reading.bottomLine<<std::endl;    // Prints the average
 
         double dv = 0;
-        //vLeft = v_go + dv;
-        //vRight = v_go - dv;
-        vLeft = 40;
-        vRight= 40;
+        //vLeft = 40;
+        //vRight= 40;
         
-        if(rightLine >0){
-			//dv = kp * rightLine;
-			vRight=50;
-			vLeft =30;
+        if(reading.rightLine >0 && reading.rightLine<10){
+			/*
+			double dv =kp*(cameraView.width/2) + kp*(reading.rightPosition/(reading.rightLine));
+			vLeft = v_go + 2*dv;
+			vRight = v_go - 2*dv;
+			*/
+			vLeft = v_go -20;
+			vRight =v_go +20;
 		}
-		else if(leftLine >0){
-			//dv = kp * rightLine;
-			vLeft=50;
-			vRight=30;
+		else if(reading.leftLine >0&& reading.leftLine<10){
+			/*
+			double dv =kp*(cameraView.width) + kp*(reading.rightPosition/reading.rightLine);
+			vLeft = v_go - dv;
+			vRight = v_go + dv;
+			*/
+			vLeft = v_go + 20;
+			vRight = v_go -20;
 		}
-		else if((bottomLine==0&&topLine==0)){
+		else if(reading.topLine>0 && reading.topLine<20){
+			/*
+			double dv =kp * (reading.topPosition/reading.topLine);
+			vLeft = v_go + dv;
+			vRight = v_go - dv;
+			*/
+			vLeft = v_go;
+			vRight = v_go; 
 			
-			vLeft =-40;
-			vRight =-40;
 		}
-		else if((topLine==0 && bottomLine>0)||topLine>30){
+		/*
+		else if((reading.bottomLine==0&&reading.topLine==0)){
+			double dv =kp * (cameraView.width/2)+ kp*(cameraView.height);
+			vLeft = v_go + dv;
+			vRight = v_go - dv;
+			//vLeft =-40;
+			//vRight =-40;
+		}
+		*/
+		else if(reading.topLine>15){
+			
+			vLeft=-30;
+			vRight =-40;
+			}
+		else if((reading.topLine==0 && reading.bottomLine>0)){
 			vLeft=40;
 			vRight =-40;
 		
 		}
+		/*
+		else{
+			vLeft=-30;
+			vRight =-40;
+		}
+		*/
 
-      std::cout<<" vLeft="<<vLeft<<"  vRight="<<vRight<<std::endl;
+    std::cout<<" vLeft="<<vLeft<<"  vRight="<<vRight<<std::endl;
 
-	     setMotors(vLeft,vRight);   
+	setMotors(vLeft,vRight);   
        //usleep(10000);
 
   } //while
