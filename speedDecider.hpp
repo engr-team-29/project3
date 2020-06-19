@@ -67,21 +67,31 @@ void setMotorChallenge(RedLines border){
 		//if there is no white line, then use the red lines to set speeds
 		int vLeft = 40;
 		int vRight = 40;
-		if(border.otherRow>border.rightSide+border.leftSide+10){
-			vLeft = -40;
-			vRight = -45;
-		}
-		else if(border.redRow>cameraView.width/2 & border.rightSide==0){
+		 if(border.redRow>cameraView.width/2 & border.rightSide==0){
 			//if the line ahead is not just the left line turn right (T-section)
 			//int difference = border.redRow-border.rightSide;
 			double difference = (1.0*border.redRow)/(1.0*cameraView.width/2);
-			vLeft += difference*10.0; 
-			vRight -= difference*10.0; 
+			vLeft += difference*20.0; 
+			vRight -= difference*20.0; 
 		}
 		
+		
+		else if(border.otherRow>border.rightSide+border.leftSide+10 & border.rightSide!=0){
+			vLeft = -65;
+			vRight = -45;
+		}
+		else if(border.otherRow>border.rightSide+border.leftSide+10 & border.leftSide!=0){
+			vLeft = -45;
+			vRight = -65;
+		}
+		else if(border.otherRow>(border.leftSide) & (border.leftSide==14) & border.rightSide==0){
+			vLeft = -5;
+			vRight = -5;
+		}
 		else if(border.rightSide==0){
 			//if there is no border to the right, turn right  & border.leftSide !=0
 			double difference = (1.0*border.leftSide)/14.0;
+			if(border.leftSide==0){difference = 0.3;}
 			vLeft += 10.0*difference; 
 			vRight -= 10.0*difference; 
 		}
